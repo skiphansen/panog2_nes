@@ -60,7 +60,6 @@ module core_soc
     ,input           spi_miso_i
     ,input           uart_rx_i
     ,input  [ 31:0]  gpio_input_i
-    ,input           clk25_i
 
     // Outputs
     ,output          intr_o
@@ -494,36 +493,5 @@ u_gpio
     ,.intr_o(interrupt3_w)
 );
 
-opl3_axi4lite u_opl3 (
-      // Inputs
-    .clk_i(clk_i)
-    ,.rst_i(rst_i)
-    ,.cfg_awvalid_i(periph5_awvalid_w)
-    ,.cfg_awaddr_i(periph5_awaddr_w)
-    ,.cfg_wvalid_i(periph5_wvalid_w)
-    ,.cfg_wdata_i(periph5_wdata_w)
-    ,.cfg_wstrb_i(periph5_wstrb_w)
-    ,.cfg_bready_i(periph5_bready_w)
-    ,.cfg_arvalid_i(periph5_arvalid_w)
-    ,.cfg_araddr_i(periph5_araddr_w)
-    ,.cfg_rready_i(periph5_rready_w)
-    ,.clk_opl3(clk25_i)   // 25 MHz OPL2 clock
-
-    // Outputs
-    ,.cfg_awready_o(periph5_awready_w)
-    ,.cfg_wready_o(periph5_wready_w)
-    ,.cfg_bvalid_o(periph5_bvalid_w)
-    ,.cfg_bresp_o(periph5_bresp_w)
-    ,.cfg_arready_o(periph5_arready_w)
-    ,.cfg_rvalid_o(periph5_rvalid_w)
-    ,.cfg_rdata_o(periph5_rdata_w)
-    ,.cfg_rresp_o(periph5_rresp_w)
-    ,.channel_a(channel_a)
-    ,.channel_b(channel_b)
-    ,.channel_c(channel_c)
-    ,.channel_d(channel_d)
-    ,.sample_clk(sample_clk)
-    ,.sample_clk_128(sample_clk_128)
-  );
 
 endmodule

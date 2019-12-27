@@ -49,7 +49,6 @@ module fpga_top
 (
     // Inputs
      input           clk_i
-    ,input           clk25_i
     ,input           rst_i
     ,input           dbg_txd_i
     ,input           spi_miso_i
@@ -338,7 +337,6 @@ u_soc
     ,.spi_miso_i(spi_miso_i)
     ,.uart_rx_i(uart_rx_i)
     ,.gpio_input_i(gpio_input_i)
-    ,.clk25_i(clk25_i)
 
     // Outputs
     ,.intr_o(soc_intr_w)

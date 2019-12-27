@@ -10,9 +10,11 @@ module top
     ,inout           led_green
     ,inout           led_blue
 
+`ifdef UART
     // UART
     ,input           uart_txd_i
     ,output          uart_rxd_o
+`endif
 
     // SPI-Flash
     ,output          flash_sck_o
@@ -29,10 +31,24 @@ module top
      ,output codec_adclrck
      ,inout  codec_scl
      ,inout  codec_sda
+
+     ,input  wire        RXD               // rs-232 rx signal
+     ,output wire        TXD               // rs-232 tx signal
+     ,output wire        HSYNC
+     ,output wire        VSYNC
+     ,output wire        DE
+     ,output wire        DVI_CLK_P
+     ,output wire        DVI_CLK_N
+     ,output wire [11:0] DVI_DATA
+     ,output wire        SCL
+     ,output wire        SDA
+     ,output wire        V1_RESET_N
+
 );
 
-// Generate 32 Mhz system clock and 25 Mhz audio clock from 125 Mhz input clock
+// Generate 100 Mhz and 25 Mhz clocks from 125 Mhz input clock
 wire clk32;
+wire        pll_locked;
 
 IBUFG clkin1_buf
 (   .O (clkin1),
@@ -48,7 +64,7 @@ PLL_BASE
       .COMPENSATION           ("SYSTEM_SYNCHRONOUS"),
       .DIVCLK_DIVIDE          (5),
       .REF_JITTER             (0.010),
-      .CLKOUT0_DIVIDE         (8),
+      .CLKOUT0_DIVIDE         (4),
       .CLKOUT0_DUTY_CYCLE     (0.500),
       .CLKOUT0_PHASE          (0.000),
       .CLKOUT1_DIVIDE         (16),
@@ -58,14 +74,14 @@ PLL_BASE
     pll_base_inst
       // Output clocks
      (.CLKFBOUT              (clkfbout),
-      .CLKOUT0               (clkout50),
+      .CLKOUT0               (clkout100),
       .CLKOUT1               (clkout25),
       .CLKOUT2               (),
       .CLKOUT3               (),
       .CLKOUT4               (),
       .CLKOUT5               (),
       // Status and control signals
-      .LOCKED                (),
+      .LOCKED                (pll_locked),
       .RST                   (RESET),
        // Input clock control
       .CLKFBIN               (clkfbout_buf),
@@ -79,8 +95,8 @@ BUFG clkf_buf
   .I (clkfbout));
 
 BUFG clk32_buf
-  (.O (clk32),
-   .I (clkout50));
+  (.O (clk100),
+   .I (clkout100));
 
 BUFG clk25_buf
 (.O (clk25),
@@ -94,7 +110,7 @@ wire rst;
 reset_gen
 u_rst
 (
-    .clk_i(clk32),
+    .clk_i(clk100),
     .rst_o(rst)
 );
 
@@ -120,7 +136,7 @@ wire signed [15:0] channel_d;
 
 fpga_top
 #(
-    .CLK_FREQ(50000000)
+    .CLK_FREQ(25000000)
    ,.BAUDRATE(1000000)   // SoC UART baud rate
    ,.UART_SPEED(1000000) // Debug bridge UART baud (should match BAUDRATE)
    ,.C_SCK_RATIO(1)      // SPI clock divider (M25P128 maxclock = 54 Mhz)
@@ -128,15 +144,14 @@ fpga_top
 )
 u_top
 (
-     .clk_i(clk32)
-    ,.clk25_i(clk25)
+     .clk_i(clk25)
     ,.rst_i(rst)
 
     ,.dbg_rxd_o(dbg_txd_w)
     ,.dbg_txd_i(uart_txd_i)
 
-    ,.uart_tx_o(uart_txd_w)
-    ,.uart_rx_i(uart_txd_i)
+    ,.uart_tx_o()
+    ,.uart_rx_i(1'b0)
 
     ,.spi_clk_o(spi_clk_w)
     ,.spi_mosi_o(spi_si_w)
@@ -212,7 +227,7 @@ endgenerate
 //synthesis attribute IOB of uart_rxd_o is "TRUE"
 reg txd_q;
 
-always @ (posedge clk32 or posedge rst)
+always @ (posedge clk100 or posedge rst)
 if (rst)
     txd_q <= 1'b1;
 else
@@ -273,7 +288,25 @@ ODDR2 bclk_buf (
     .Q(codec_bclk)
 );
 
+// NES
 
+nes_top nes_top_u (
+    .CLK_25MHZ(clk25)         // 25MHz system clock signal
+    ,.CLK_100MHZ(clk100)
+    ,.pll_locked(pll_locked)
+    ,.CONSOLE_RESET_N(1'b1)   // console reset
+    ,.RXD(RXD)               // rs-232 rx signal
+    ,.TXD(TXD)               // rs-232 tx signal
+    ,.HSYNC(HSYNC)
+    ,.VSYNC(VSYNC)
+    ,.DE(DE)
+    ,.DVI_CLK_P(DVI_CLK_P)
+    ,.DVI_CLK_N(DVI_CLK_N)
+    ,.DVI_DATA(DVI_DATA)
+    ,.SCL(SCL)
+    ,.SDA(SDA)
+    ,.V1_RESET_N(V1_RESET_N)
+);
 
 //-----------------------------------------------------------------
 // Tie-offs
