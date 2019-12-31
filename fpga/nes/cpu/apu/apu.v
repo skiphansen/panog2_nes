@@ -33,7 +33,11 @@ module apu
   input  wire [15:0] a_in,      // addr input bus
   input  wire [ 7:0] d_in,      // data input bus
   input  wire        r_nw_in,   // read/write select
-  output wire        audio_out, // pwm audio output
+//`ifdef PANO_PORT
+  output wire [15:0] audio_out, // audio output
+//`else
+// output wire        audio_out, // pwm audio output
+//`endif
   output wire [ 7:0] d_out      // data output bus
 );
 
@@ -210,6 +214,17 @@ apu_noise apu_noise_blk(
 
 assign noise_wr = ~r_nw_in && (a_in[15:2] == NOISE_CHANNEL_CNTL_MMR_ADDR[15:2]);
 
+`ifdef PANO_PORT
+APUMixer apu_mixer_blk(
+  .mute_in(mute_in),
+  .square1(pulse0_out),
+  .square2(pulse1_out),
+  .triangle(triangle_out),
+  .noise(noise_out),
+  .dmc(7'b0),
+  .sample(audio_out)
+);
+`else
 //
 // Mixer.
 //
@@ -223,6 +238,7 @@ apu_mixer apu_mixer_blk(
   .noise_in(noise_out),
   .audio_out(audio_out)
 );
+`endif
 
 assign d_out = (r_nw_in && (a_in == STATUS_MMR_ADDR)) ?
                { 4'b0000, noise_active, triangle_active, pulse1_active, pulse0_active } : 8'h00;

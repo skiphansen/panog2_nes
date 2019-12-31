@@ -54,6 +54,7 @@ module fpga_top
     ,input           spi_miso_i
     ,input           uart_rx_i
     ,input  [ 31:0]  gpio_input_i
+    ,input           nes_uart_rx_i
 
     // Outputs
     ,output          dbg_rxd_o
@@ -69,6 +70,7 @@ module fpga_top
     ,output signed [15:0] channel_d
     ,output sample_clk
     ,output sample_clk_128
+    ,output nes_tx_o
 );
 
 wire  [  3:0]  axi_t_awid_w;
@@ -337,6 +339,7 @@ u_soc
     ,.spi_miso_i(spi_miso_i)
     ,.uart_rx_i(uart_rx_i)
     ,.gpio_input_i(gpio_input_i)
+    ,.nes_uart_rx_i(nes_uart_rx_i)
 
     // Outputs
     ,.intr_o(soc_intr_w)
@@ -360,6 +363,7 @@ u_soc
     ,.channel_d(channel_d)
     ,.sample_clk(sample_clk)
     ,.sample_clk_128(sample_clk_128)
+    ,.nes_tx_o(nes_tx_o)
 );
 
 

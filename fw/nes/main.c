@@ -13,6 +13,10 @@
 #include "spiffs.h"
 #include "uart_lite.h"
 #include "spiffs_drv.h"
+#include "Uart.h"
+
+#define DEBUG_LOGGING
+#include "log.h"
 
 enum DbgPacketOpCode
 {
@@ -43,8 +47,6 @@ enum CpuReg
 };
 
 
-#define DEBUG_LOGGING
-#include "log.h"
 
 #define REG_WR(reg, wr_data)       *((volatile uint32_t *)(reg)) = (wr_data)
 #define REG_RD(reg)                *((volatile uint32_t *)(reg))
@@ -58,7 +60,7 @@ ContextI2C gI2cCtx = {
 void PlayFiles(spiffs *pFS);
 bool ButtonJustPressed(void);
 bool NesLoad(char *FileName);
-bool SendDbgPacket(char *Buf,int Len);
+bool SendDbgPacket(char *Buf,int Len,char *RxBuf,int *RxCount);
 bool TestNesConnection(void);
 
 spiffs *gSpiffs;
@@ -69,13 +71,18 @@ spiffs *gSpiffs;
 int main(int argc, char *argv[])
 {
    int i;
+
+   LOG("Greatings earthling!\n");
+
    do {
-      uartlite_init(NES_UART_BASE);
+      Uart_init(NES_UART_BASE);
       if(i2c_init(&gI2cCtx)) {
          ELOG("i2c_init failed\n");
          break;
       }
+      LOG("Calling TestNesConnection\n");
       TestNesConnection();
+      LOG("Calling audio_init\n");
       audio_init(&gI2cCtx);
       if((gSpiffs = SpiffsMount()) == NULL) {
          ELOG("SpiffsMount failed\n");
@@ -116,6 +123,7 @@ void PlayFiles(spiffs *pFS)
         cp = strrchr(it->name,'.');
         if(cp != NULL && strcmp(cp,".nes") == 0) {
            NesLoad(it->name);
+           break;
         }
     }
     SPIFFS_closedir(&dir);
@@ -208,16 +216,34 @@ bool NesLoad(char *FileName)
 
       PrgRomSize = PrgRomBanks * 0x4000;
       ChrRomSize = ChrRomBanks * 0x2000;
+   // Issue a debug break.
+      Buf[0] = DbgPacketOpCodeDbgHlt;
+      if(Error = SendDbgPacket(Buf,1,NULL,NULL)) {
+         break;
+      }
+
+   // Disable the PPU
+      Buf[0] = DbgPacketOpCodePpuDisable;
+      if(Error = SendDbgPacket(Buf,1,NULL,NULL)) {
+         break;
+      }
+
+   // Set iNES header info to configure mappers.
+      Buf[0] = DbgPacketOpCodeCartSetCfg;
+      memcpy(&Buf[1],&NesHeader[4],5);
+      if(Error = SendDbgPacket(Buf,6,NULL,NULL)) {
+         break;
+      }
 
       Buf[0] = DbgPacketOpCodeCpuMemWr;
       Buf[3] = (char) (TRANSFER_LEN & 0xff);
       Buf[4] = (char) ((TRANSFER_LEN >> 8)& 0xff);
 
+   // Copy PRG ROM data.
       Adr = 0x8000;
       for(i = 0; i < (PrgRomSize / TRANSFER_LEN); i++) {
          Buf[1] = (char) (Adr & 0xff);
          Buf[2] = (char) ((Adr >> 8)& 0xff);
-         Adr += TRANSFER_LEN;
 
          BytesRead = SPIFFS_read(gSpiffs,fd,&Buf[5],TRANSFER_LEN);
          if(BytesRead < TRANSFER_LEN) {
@@ -225,9 +251,11 @@ bool NesLoad(char *FileName)
             Error = true;
             break;
          }
-         if(Error = SendDbgPacket(Buf,sizeof(Buf))) {
+         LOG("Sending adr: 0x%x\n",Adr);
+         if(Error = SendDbgPacket(Buf,sizeof(Buf),NULL,NULL)) {
             break;
          }
+         Adr += TRANSFER_LEN;
       }
       if(Error) {
          break;
@@ -237,11 +265,12 @@ bool NesLoad(char *FileName)
       pclVal = Buf[5 + TRANSFER_LEN - 4];
       pchVal = Buf[5 + TRANSFER_LEN - 3];
 
+   // Copy CHR ROM data.
       Adr = 0;
+      Buf[0] = DbgPacketOpCodePpuMemWr;
       for(i = 0; i < (ChrRomSize / TRANSFER_LEN); i++) {
          Buf[1] = (char) (Adr & 0xff);
          Buf[2] = (char) ((Adr >> 8)& 0xff);
-         Adr += TRANSFER_LEN;
 
          BytesRead = SPIFFS_read(gSpiffs,fd,&Buf[5],TRANSFER_LEN);
          if(BytesRead < TRANSFER_LEN) {
@@ -249,9 +278,11 @@ bool NesLoad(char *FileName)
             Error = true;
             break;
          }
-         if(Error = SendDbgPacket(Buf,sizeof(Buf))) {
+         LOG("Sending adr: 0x%x\n",Adr);
+         if(Error = SendDbgPacket(Buf,sizeof(Buf),NULL,NULL)) {
             break;
          }
+         Adr += TRANSFER_LEN;
       }
       if(Error) {
          break;
@@ -262,19 +293,22 @@ bool NesLoad(char *FileName)
       Buf[0] = DbgPacketOpCodeCpuRegWr;
       Buf[1] = CpuRegPcl;
       Buf[2] = pclVal;
-      if(Error = SendDbgPacket(Buf,3)) {
+      if(Error = SendDbgPacket(Buf,3,NULL,NULL)) {
          break;
       }
 
       Buf[0] = DbgPacketOpCodeCpuRegWr;
       Buf[1] = CpuRegPch;
       Buf[2] = pchVal;
-      if(Error = SendDbgPacket(Buf,3)) {
+      if(Error = SendDbgPacket(Buf,3,NULL,NULL)) {
          break;
       }
 
+      TestNesConnection();
+
+   // Issue a debug run command.
       Buf[0] = DbgPacketOpCodeDbgRun;
-      if(Error = SendDbgPacket(Buf,1)) {
+      if(Error = SendDbgPacket(Buf,1,NULL,NULL)) {
          break;
       }
    } while(false);
@@ -287,37 +321,75 @@ bool NesLoad(char *FileName)
 }
 
 
-bool SendDbgPacket(char *Buf,int Len)
+bool SendDbgPacket(char *Buf,int Len,char *RxBuf,int *pRxCount)
 {
    int i;
-   for(i = 0; i < Len; i++) {
-      uartlite_putc(Buf[i]);
+   int RxCount = 0;
+   int RxLeft = 0;
+
+   if(RxBuf != NULL && pRxCount != NULL) {
+      RxLeft = *pRxCount;
    }
+
+   if(Len < 16) {
+      LOG("Sending %d bytes:\n",Len);
+      LOG_HEX(Buf,Len);
+   }
+   else {
+      LOG("Sending %d bytes\n",Len);
+      LOG_HEX(Buf,16);
+   }
+   for(i = 0; i < Len; i++) {
+      if(RxLeft> 0 && Uart_haschar(NES_UART_BASE)) {
+         RxLeft--;
+         RxBuf[RxCount] = Uart_getchar(NES_UART_BASE);
+         LOG_R("Rx: %02x\n",RxBuf[RxCount]);
+         RxCount++;
+      }
+      // LOG_R("Tx: %02x\n",Buf[i]);
+      Uart_putc(NES_UART_BASE,Buf[i]);
+   }
+   if(RxBuf != NULL && pRxCount != NULL) {
+      *pRxCount = RxCount;
+   }
+   return false;
 }
 
 bool TestNesConnection(void)
 {
    char Buf[] = {DbgPacketOpCodeEcho,4,0,'N','E','S',0};
+   char RxBuf[4];
    int RxByte;
    int i;
+   int RxCount = sizeof(RxBuf);
 
 // Purge any garbage
    LOG("Purging Rx ...");
-   while(uartlite_haschar()) {
-      uartlite_getchar();
+   while(Uart_haschar(NES_UART_BASE)) {
+      Uart_getchar(NES_UART_BASE);
    }
-   LOG("\n");
-   SendDbgPacket(Buf,sizeof(Buf));
+   LOG_R("\n");
+   LOG("Sending echo packet\n");
+   SendDbgPacket(Buf,sizeof(Buf),RxBuf,&RxCount);
 
-   for(i = 0; i < sizeof(Buf); i++) {
-      while(!uartlite_haschar());
-      RxByte = uartlite_getchar();
-      if(RxByte != Buf[i]) {
-         ELOG("Echo failure, got 0x%02x, expected 0x%02x\n",RxByte,Buf[i]);
-         break;
+   // LOG("Received %d bytes while sending\n",RxCount);
+   for(i = 0; i < RxCount; i++) {
+      if(RxBuf[i] != Buf[i + 3]) {
+         ELOG("\nEcho failure, got 0x%02x, expected 0x%02x\n",RxBuf[i],Buf[i+3]);
       }
    }
-   if(i == sizeof(Buf)) {
+
+   // LOG("Waiting for %d more bytes\n",Buf[1] - RxCount);
+   for(i = RxCount; i < Buf[1]; i++) {
+      while(!Uart_haschar(NES_UART_BASE));
+      RxByte = Uart_getchar(NES_UART_BASE);
+      LOG("Rx: 0x%02x\n",RxByte);
+      if(RxByte != Buf[i + 3]) {
+         ELOG("\nEcho failure, got 0x%02x, expected 0x%02x\n",RxByte,Buf[i+3]);
+      }
+   }
+   if(i == Buf[1]) {
+      LOG_R("\n");
       LOG("NES communications verified\n");
    }
 

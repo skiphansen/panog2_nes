@@ -143,8 +143,12 @@ uart #(.SYS_CLK_FREQ(100000000),
        .BAUD_RATE(38400),
        .DATA_BITS(8),
        .STOP_BITS(1),
-       .PARITY_MODE(1)) uart_blk
-(
+//`ifdef PANO_PORT
+       .PARITY_MODE(0)
+//`else
+//     .PARITY_MODE(1)
+//`endif
+) uart_blk(
   .clk(clk),
   .reset(rst),
   .rx(rx),

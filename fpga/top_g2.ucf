@@ -8,12 +8,12 @@ NET "flash_si_o"  LOC="AB20" | IOSTANDARD=LVCMOS33;
 NET "flash_so_i"  LOC="AA20" | IOSTANDARD=LVCMOS33;
 
 # serial cable connected to mini HDMI DDC signals
-#NET "uart_txd_i"  LOC="AA21" | IOSTANDARD=LVTTL;        # AKA DDC2_SCK
-#NET "uart_rxd_o"  LOC="AB19" | IOSTANDARD=LVTTL;        # AKA DDC2_SDA
+NET "uart_txd_i"  LOC="AA21" | IOSTANDARD=LVTTL;        # AKA DDC2_SCK
+NET "uart_rxd_o"  LOC="AB19" | IOSTANDARD=LVTTL;        # AKA DDC2_SDA
 
 # ==== RS-232 Serial Ports (RS232) ====
-NET "RXD" LOC = AA21 | IOSTANDARD=LVCMOS33;
-NET "TXD" LOC = AB19 | IOSTANDARD=LVCMOS33;
+#NET "RXD" LOC = AA21 | IOSTANDARD=LVCMOS33;
+#NET "TXD" LOC = AB19 | IOSTANDARD=LVCMOS33;
 
 ############################################################################
 # ULPI Interface
@@ -81,10 +81,6 @@ NET "pano_button"           LOC = H12 | IOSTANDARD = LVCMOS33 | PULLUP;
 # Wolfson codec audio interface
 NET "codec_scl" LOC = U17 | IOSTANDARD = LVCMOS33;
 NET "codec_sda" LOC = AB17 | IOSTANDARD = LVCMOS33;
-
-# ==== RS-232 Serial Ports (RS232) ====
-NET "RXD" LOC = AA21 | IOSTANDARD=LVCMOS33;
-NET "TXD" LOC = AB19 | IOSTANDARD=LVCMOS33;
 
 # DVI Common
 NET "SDA" LOC = D9 | IOSTANDARD = LVCMOS33;

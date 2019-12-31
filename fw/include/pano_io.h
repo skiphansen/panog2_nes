@@ -10,6 +10,6 @@
 #define GPIO_BIT_CODEC_SDA    0x20
 #define GPIO_BIT_CODEC_SCL    0x40
 
-#define OPL3_BASE             0x95000000
+#define NES_UART_BASE         0x95000000
 #endif   // _PANIO_IO_H_
 

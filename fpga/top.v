@@ -1,3 +1,5 @@
+// `define NES_OWNS_PORT
+
 //-----------------------------------------------------------------
 // TOP
 //-----------------------------------------------------------------
@@ -10,11 +12,9 @@ module top
     ,inout           led_green
     ,inout           led_blue
 
-`ifdef UART
     // UART
     ,input           uart_txd_i
     ,output          uart_rxd_o
-`endif
 
     // SPI-Flash
     ,output          flash_sck_o
@@ -32,8 +32,6 @@ module top
      ,inout  codec_scl
      ,inout  codec_sda
 
-     ,input  wire        RXD               // rs-232 rx signal
-     ,output wire        TXD               // rs-232 tx signal
      ,output wire        HSYNC
      ,output wire        VSYNC
      ,output wire        DE
@@ -47,7 +45,6 @@ module top
 );
 
 // Generate 100 Mhz and 25 Mhz clocks from 125 Mhz input clock
-wire clk32;
 wire        pll_locked;
 
 IBUFG clkin1_buf
@@ -57,26 +54,29 @@ IBUFG clkin1_buf
 
 PLL_BASE
     #(.BANDWIDTH              ("OPTIMIZED"),
-      .CLKFBOUT_MULT          (16),
+      .CLKFBOUT_MULT          (24),
       .CLKFBOUT_PHASE         (0.000),
       .CLK_FEEDBACK           ("CLKFBOUT"),
       .CLKIN_PERIOD           (8.000),
       .COMPENSATION           ("SYSTEM_SYNCHRONOUS"),
       .DIVCLK_DIVIDE          (5),
       .REF_JITTER             (0.010),
-      .CLKOUT0_DIVIDE         (4),
+      .CLKOUT0_DIVIDE         (6),
       .CLKOUT0_DUTY_CYCLE     (0.500),
       .CLKOUT0_PHASE          (0.000),
-      .CLKOUT1_DIVIDE         (16),
+      .CLKOUT1_DIVIDE         (24),
       .CLKOUT1_DUTY_CYCLE     (0.500),
-      .CLKOUT1_PHASE          (0.000)
+      .CLKOUT1_PHASE          (0.000),
+      .CLKOUT2_DIVIDE         (50),
+      .CLKOUT2_DUTY_CYCLE     (0.500),
+      .CLKOUT2_PHASE          (0.000)
     )
     pll_base_inst
       // Output clocks
      (.CLKFBOUT              (clkfbout),
       .CLKOUT0               (clkout100),
       .CLKOUT1               (clkout25),
-      .CLKOUT2               (),
+      .CLKOUT2               (clkout12),
       .CLKOUT3               (),
       .CLKOUT4               (),
       .CLKOUT5               (),
@@ -94,13 +94,18 @@ BUFG clkf_buf
  (.O (clkfbout_buf),
   .I (clkfbout));
 
-BUFG clk32_buf
+BUFG clk100_buf
   (.O (clk100),
    .I (clkout100));
 
 BUFG clk25_buf
 (.O (clk25),
  .I (clkout25));
+
+BUFG clk12_buf
+(.O (clk12),
+ .I (clkout12));
+
 
 //-----------------------------------------------------------------
 // Reset
@@ -133,6 +138,8 @@ wire signed [15:0] channel_a;
 wire signed [15:0] channel_b;
 wire signed [15:0] channel_c;
 wire signed [15:0] channel_d;
+wire nes_tx_o;
+wire nes_txd_i;
 
 fpga_top
 #(
@@ -150,8 +157,9 @@ u_top
     ,.dbg_rxd_o(dbg_txd_w)
     ,.dbg_txd_i(uart_txd_i)
 
-    ,.uart_tx_o()
-    ,.uart_rx_i(1'b0)
+    ,.uart_tx_o(uart_txd_w)
+    ,.uart_rx_i(uart_txd_i)
+    ,.nes_uart_rx_i(nes_txd_i)
 
     ,.spi_clk_o(spi_clk_w)
     ,.spi_mosi_o(spi_si_w)
@@ -168,6 +176,7 @@ u_top
     ,.channel_d(channel_d)
     ,.sample_clk(sample_clk)
     ,.sample_clk_128(codec_bclk_i)
+    ,.nes_tx_o(nes_tx_o)
 );
 
 //-----------------------------------------------------------------
@@ -220,6 +229,7 @@ begin
 end
 endgenerate
 
+`ifndef NES_OWNS_PORT
 //-----------------------------------------------------------------
 // UART Tx combine
 //-----------------------------------------------------------------
@@ -235,7 +245,7 @@ else
 
 // 'OR' two UARTs together
 assign uart_rxd_o  = txd_q;
-
+`endif
 
 // Audio
 wire signed [18:0] left_pre, right_pre;
@@ -248,22 +258,20 @@ wire signed [15:0] left, right;
 assign left = left_pre > 32767 ? 32767 : left_pre < -32768 ? -32768 : left_pre[15:0];
 assign right = right_pre > 32767 ? 32767 : right_pre < -32768 ? -32768 : right_pre[15:0];
 
-reset_gen reset_gen_25 (
-    .clk_i(clk25)
-    ,.rst_o(reset25)
+reset_gen reset_gen_12 (
+    .clk_i(clk12)
+    ,.rst_o(reset12)
 );
 
 audio audio_out (
-    .clk25(clk25),
-    .reset25(reset25),
-    .codec_bclk_i(codec_bclk_i),
-    .codec_dacdat(codec_dacdata),
-    .codec_daclrc(codec_daclrck),
-    .codec_adcdat(codec_adcdata),
-    .codec_adclrc(codec_adclrck),
-    .audio_right_sample(right),
-    .audio_left_sample(left),
-    .audio_sample_clk(sample_clk)
+    .clk12(clk12)
+    ,.reset12(reset12)
+    ,.codec_dacdat(codec_dacdata)
+    ,.codec_daclrc(codec_daclrck)
+    ,.codec_adcdat(codec_adcdata)
+    ,.codec_adclrc(codec_adclrck)
+    ,.audio_right_sample(right)
+    ,.audio_left_sample(left)
 );
 
 ODDR2 mclk_buf (
@@ -295,8 +303,13 @@ nes_top nes_top_u (
     ,.CLK_100MHZ(clk100)
     ,.pll_locked(pll_locked)
     ,.CONSOLE_RESET_N(1'b1)   // console reset
-    ,.RXD(RXD)               // rs-232 rx signal
-    ,.TXD(TXD)               // rs-232 tx signal
+`ifdef NES_OWNS_PORT
+    ,.RXD(uart_txd_i)           // rs-232 rx signal
+    ,.TXD(uart_rxd_o)          // rs-232 tx signal
+`else
+    ,.RXD(nes_tx_o)           // rs-232 rx signal
+    ,.TXD(nes_txd_i)          // rs-232 tx signal
+`endif
     ,.HSYNC(HSYNC)
     ,.VSYNC(VSYNC)
     ,.DE(DE)
