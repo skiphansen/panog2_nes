@@ -49,7 +49,8 @@ module rp2a03
 
   // Audio signals.
   input  wire [ 3:0] mute_in,        // disable autio channels
-  output wire        audio_out,      // pwm audio output
+  output wire [15:0] audio_out,      // pwm audio output
+//  output wire        audio_out,      // pwm audio output
 
   // HCI interface.
   input  wire [ 3:0] dbgreg_sel_in,  // dbg reg select

@@ -32,6 +32,8 @@
 *
 */
 
+wire [ 15:0] audio_o;
+
 module nes_top
 (
   input  wire        CLK_25MHZ,         // 25MHz system clock signal
@@ -48,11 +50,10 @@ module nes_top
   output wire [11:0] DVI_DATA,
   output wire        SCL,
   output wire        SDA,
-  output wire        V1_RESET_N
+  output wire        V1_RESET_N,
+  output wire [15:0] audio_out
 //  output wire [3:0] TMDS,
 //  output wire [3:0] TMDSB,
-//  output wire       AUDIO_LEFT,        // pwm output audio channel
-//  output wire       AUDIO_RIGHT        // pwm output audio channel
 //  input  wire       NES_JOYPAD_DATA1, 
 //  input  wire       NES_JOYPAD_DATA2,
 //  output wire       NES_JOYPAD_CLK,    // joypad output clk signal
@@ -97,7 +98,6 @@ wire [ 3:0] rp2a03_dbgreg_sel;
 wire [ 7:0] rp2a03_dbgreg_din;
 wire        rp2a03_dbgreg_wr;
 wire [ 7:0] rp2a03_dbgreg_dout;
-wire        audio;
 
 rp2a03 rp2a03_blk(
   .clk_in(CLK_100MHZ),
@@ -115,15 +115,12 @@ rp2a03 rp2a03_blk(
   .jp_clk(NES_JOYPAD_CLK),
   .jp_latch(NES_JOYPAD_LATCH),
   .mute_in(3'b0),
-  .audio_out(audio),
+  .audio_out(audio_out),
   .dbgreg_sel_in(rp2a03_dbgreg_sel),
   .dbgreg_d_in(rp2a03_dbgreg_din),
   .dbgreg_wr_in(rp2a03_dbgreg_wr),
   .dbgreg_d_out(rp2a03_dbgreg_dout)
 );
-
-//assign AUDIO_LEFT = audio;
-//assign AUDIO_RIGHT = audio;
 
 //
 // CART: cartridge emulator

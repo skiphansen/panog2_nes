@@ -214,7 +214,6 @@ apu_noise apu_noise_blk(
 
 assign noise_wr = ~r_nw_in && (a_in[15:2] == NOISE_CHANNEL_CNTL_MMR_ADDR[15:2]);
 
-`ifdef PANO_PORT
 APUMixer apu_mixer_blk(
   .mute_in(mute_in),
   .square1(pulse0_out),
@@ -224,21 +223,19 @@ APUMixer apu_mixer_blk(
   .dmc(7'b0),
   .sample(audio_out)
 );
-`else
 //
 // Mixer.
 //
-apu_mixer apu_mixer_blk(
-  .clk_in(clk_in),
-  .rst_in(rst_in),
-  .mute_in(mute_in),
-  .pulse0_in(pulse0_out),
-  .pulse1_in(pulse1_out),
-  .triangle_in(triangle_out),
-  .noise_in(noise_out),
-  .audio_out(audio_out)
-);
-`endif
+// apu_mixer apu_mixer_blk(
+//   .clk_in(clk_in),
+//   .rst_in(rst_in),
+//   .mute_in(mute_in),
+//   .pulse0_in(pulse0_out),
+//   .pulse1_in(pulse1_out),
+//   .triangle_in(triangle_out),
+//   .noise_in(noise_out),
+//   .audio_out(audio_out)
+// );
 
 assign d_out = (r_nw_in && (a_in == STATUS_MMR_ADDR)) ?
                { 4'b0000, noise_active, triangle_active, pulse1_active, pulse0_active } : 8'h00;

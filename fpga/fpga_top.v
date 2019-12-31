@@ -64,12 +64,6 @@ module fpga_top
     ,output          uart_tx_o
     ,output [ 31:0]  gpio_output_o
     ,output [ 31:0]  gpio_output_enable_o
-    ,output signed [15:0] channel_a
-    ,output signed [15:0] channel_b
-    ,output signed [15:0] channel_c
-    ,output signed [15:0] channel_d
-    ,output sample_clk
-    ,output sample_clk_128
     ,output nes_tx_o
 );
 
@@ -357,12 +351,6 @@ u_soc
     ,.uart_tx_o(uart_tx_o)
     ,.gpio_output_o(gpio_output_o)
     ,.gpio_output_enable_o(gpio_output_enable_o)
-    ,.channel_a(channel_a)
-    ,.channel_b(channel_b)
-    ,.channel_c(channel_c)
-    ,.channel_d(channel_d)
-    ,.sample_clk(sample_clk)
-    ,.sample_clk_128(sample_clk_128)
     ,.nes_tx_o(nes_tx_o)
 );
 

@@ -134,10 +134,6 @@ wire [31:0] gpio_in_w;
 wire [31:0] gpio_out_w;
 wire [31:0] gpio_out_en_w;
 
-wire signed [15:0] channel_a;
-wire signed [15:0] channel_b;
-wire signed [15:0] channel_c;
-wire signed [15:0] channel_d;
 wire nes_tx_o;
 wire nes_txd_i;
 
@@ -170,12 +166,6 @@ u_top
     ,.gpio_output_o(gpio_out_w)
     ,.gpio_output_enable_o(gpio_out_en_w)
 
-    ,.channel_a(channel_a)
-    ,.channel_b(channel_b)
-    ,.channel_c(channel_c)
-    ,.channel_d(channel_d)
-    ,.sample_clk(sample_clk)
-    ,.sample_clk_128(codec_bclk_i)
     ,.nes_tx_o(nes_tx_o)
 );
 
@@ -248,20 +238,12 @@ assign uart_rxd_o  = txd_q;
 `endif
 
 // Audio
-wire signed [18:0] left_pre, right_pre;
-
-assign left_pre = channel_a + channel_c;
-assign right_pre = channel_b + channel_d;
-
-wire signed [15:0] left, right;
-
-assign left = left_pre > 32767 ? 32767 : left_pre < -32768 ? -32768 : left_pre[15:0];
-assign right = right_pre > 32767 ? 32767 : right_pre < -32768 ? -32768 : right_pre[15:0];
-
 reset_gen reset_gen_12 (
     .clk_i(clk12)
     ,.rst_o(reset12)
 );
+
+wire [15:0] audio_o;
 
 audio audio_out (
     .clk12(clk12)
@@ -270,8 +252,8 @@ audio audio_out (
     ,.codec_daclrc(codec_daclrck)
     ,.codec_adcdat(codec_adcdata)
     ,.codec_adclrc(codec_adclrck)
-    ,.audio_right_sample(right)
-    ,.audio_left_sample(left)
+    ,.audio_right_sample(audio_o)
+    ,.audio_left_sample(audio_o)
 );
 
 ODDR2 mclk_buf (
@@ -290,8 +272,8 @@ ODDR2 bclk_buf (
     .R(1'b0),
     .D0(1'b1),
     .D1(1'b0),
-    .C0(codec_bclk_i),
-    .C1(!codec_bclk_i),
+    .C0(clk12),
+    .C1(!clk12),
     .CE(1'b1),
     .Q(codec_bclk)
 );
@@ -319,6 +301,7 @@ nes_top nes_top_u (
     ,.SCL(SCL)
     ,.SDA(SDA)
     ,.V1_RESET_N(V1_RESET_N)
+    ,.audio_out(audio_o)
 );
 
 //-----------------------------------------------------------------
