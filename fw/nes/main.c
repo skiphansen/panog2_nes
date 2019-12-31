@@ -88,13 +88,16 @@ int main(int argc, char *argv[])
          ELOG("SpiffsMount failed\n");
          break;
       }
-      if(argc > 0) {
-         for(i = 0; i < argc; i++) {
-            NesLoad(argv[i]);
+
+      for( ; ; ) {
+         if(argc > 0) {
+            for(i = 0; i < argc; i++) {
+               NesLoad(argv[i]);
+            }
          }
-      }
-      else {
-         PlayFiles(gSpiffs);
+         else {
+            PlayFiles(gSpiffs);
+         }
       }
       SpiffsUnmount();
    } while(false);
@@ -123,7 +126,7 @@ void PlayFiles(spiffs *pFS)
         cp = strrchr(it->name,'.');
         if(cp != NULL && strcmp(cp,".nes") == 0) {
            NesLoad(it->name);
-           break;
+           while(!ButtonJustPressed());
         }
     }
     SPIFFS_closedir(&dir);
