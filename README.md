@@ -8,7 +8,7 @@ and [here](https://github.com/skiphansen/pano_hello_g1) for background.
 Magnus of Saanlima Electronics did the [orignal port](https://github.com/Saanlima/Pano_G2C) to the pano,
 this project adds the following:
 
-* An RISC-V coprocessor based on Ultraembedded's [fpga_test_soc]}(https://github.com/ultraembedded/fpga_test_soc)
+* An RISC-V coprocessor based on Ultraembedded's [fpga_test_soc](https://github.com/ultraembedded/fpga_test_soc)
 * Hardware and software interfaces to the Panologic's sound system
 * A new APU mixer based on MiSter [project's](https://github.com/MiSTer-devel/NES_MiSTer) mixer
 * A spiffs filesystem containing game ROMs from Brian Bennet's original project.
@@ -115,7 +115,6 @@ they do NOT match the orignal NES controller.  You will need to buzz out the
 wires to the orignal connector to determine the correct colors for your 
 controller.
 
-|--------|-----------------|-----|---------|----------------|
 | Signal |     MCP23017    | DB9 | NES pin |     Color      |
 |--------|-----------------|-----|---------|----------------|
 | DO-P1  | 21 - PA0        |  4  |    4    | brown player 1 |
@@ -124,7 +123,6 @@ controller.
 |   PS   | 23 - PA2        |  2  |    3    | yellow         |
 |   GND  | 10, 15, 16, 17  |  8  |    1    | white          |
 |   +5V  | 9, 18           |  7  |    7    | red            |
-|--------|-----------------|-----|---------|----------------|
 
 ## Possible alternative Game Controller Interface
 
