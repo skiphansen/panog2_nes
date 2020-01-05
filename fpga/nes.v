@@ -51,13 +51,13 @@ module nes_top
   output wire        SCL,
   output wire        SDA,
   output wire        V1_RESET_N,
-  output wire [15:0] audio_out
+  output wire [15:0] audio_out,
 //  output wire [3:0] TMDS,
 //  output wire [3:0] TMDSB,
-//  input  wire       NES_JOYPAD_DATA1, 
-//  input  wire       NES_JOYPAD_DATA2,
-//  output wire       NES_JOYPAD_CLK,    // joypad output clk signal
-//  output wire       NES_JOYPAD_LATCH,  // joypad output latch signal
+  input  wire       jp_data1_in, 
+  input  wire       jp_data2_in,
+  output wire       jp_clk,    // joypad output clk signal
+  output wire       jp_latch  // joypad output latch signal
 );
 
 //
@@ -72,11 +72,6 @@ wire [13:0] ppumc_a;
 wire        ppumc_wr;
 
 wire        clkfbout, pllclk0, pllclk1, pllclk2;
-
-wire NES_JOYPAD_DATA1, NES_JOYPAD_DATA2;
-
-assign NES_JOYPAD_DATA1 = 1'b1;
-assign NES_JOYPAD_DATA2 = 1'b1;
 
 assign V1_RESET_N = pll_locked & CONSOLE_RESET_N;
 
@@ -110,10 +105,10 @@ rp2a03 rp2a03_blk(
   .a_out(rp2a03_a),
   .r_nw_out(rp2a03_r_nw),
   .brk_out(rp2a03_brk),
-  .jp_data1_in(NES_JOYPAD_DATA1),
-  .jp_data2_in(NES_JOYPAD_DATA2),
-  .jp_clk(NES_JOYPAD_CLK),
-  .jp_latch(NES_JOYPAD_LATCH),
+  .jp_data1_in(jp_data1_in),
+  .jp_data2_in(jp_data2_in),
+  .jp_clk(jp_clk),
+  .jp_latch(jp_latch),
   .mute_in(3'b0),
   .audio_out(audio_out),
   .dbgreg_sel_in(rp2a03_dbgreg_sel),

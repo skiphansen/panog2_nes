@@ -2,7 +2,7 @@
 
 // Copyright (c) 2012-2013 Ludvig Strigeus
 // This program is GPL Licensed. See COPYING for the full license.
- 
+// Ported to verilog by Skip Hansen, 2019
 
 // http://wiki.nesdev.com/w/index.php/APU_Mixer
 // I generated three LUT's for each mix channel entry and one lut for the squares, then a
@@ -33,12 +33,13 @@ assign noise_m = (mute_in[3]) ? 4'h0 : noise;
 wire [4:0] squares = square1_m + square2_m;
 
 reg [5:0] tri_lookup;
-reg [3:0] noise_lookup;
-reg [6:0] dmc_lookup;
+reg [5:0] noise_lookup;
+reg [7:0] dmc_lookup;
 reg [8:0] mix;
 reg [15:0] ch1;
 reg [15:0] ch2;
 reg [16:0] chan_mix;
+reg [16:0] adj_mix;
 
 always @*
   begin
@@ -535,12 +536,16 @@ always @*
         10'd280 : ch2 = 16'd48250;
         10'd281 : ch2 = 16'd48343;
         10'd282 : ch2 = 16'd48436;
-        default : ch2 = 16'd0;
+        default : ch2 = 0;
     endcase
 
     chan_mix = ch1 + ch2;
 
-    sample = chan_mix > 16'hFFFF ? 16'hFFFF : chan_mix[15:0];
+    if(chan_mix > 16'hFFFF)
+        sample = 16'h7fff;
+    else
+        sample = chan_mix[15:0] - 16'd32768;
+
   end
 
 endmodule

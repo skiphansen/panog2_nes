@@ -492,7 +492,7 @@ u_gpio
 uart_lite
 #(
      .CLK_FREQ(CLK_FREQ)
-    ,.BAUDRATE(38400)
+    ,.BAUDRATE(1000000)
 )
 u_nes_uart
 (

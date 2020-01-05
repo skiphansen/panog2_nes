@@ -11,9 +11,8 @@ NET "flash_so_i"  LOC="AA20" | IOSTANDARD=LVCMOS33;
 NET "uart_txd_i"  LOC="AA21" | IOSTANDARD=LVTTL;        # AKA DDC2_SCK
 NET "uart_rxd_o"  LOC="AB19" | IOSTANDARD=LVTTL;        # AKA DDC2_SDA
 
-# ==== RS-232 Serial Ports (RS232) ====
-#NET "RXD" LOC = AA21 | IOSTANDARD=LVCMOS33;
-#NET "TXD" LOC = AB19 | IOSTANDARD=LVCMOS33;
+NET "dvi0_scl"          LOC = C14 | IOSTANDARD = LVCMOS33;
+NET "dvi0_sda"          LOC = C17 | IOSTANDARD = LVCMOS33;
 
 ############################################################################
 # ULPI Interface

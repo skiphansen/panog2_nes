@@ -12,6 +12,9 @@ module top
     ,inout           led_green
     ,inout           led_blue
 
+    ,inout           dvi0_scl
+    ,inout           dvi0_sda
+
     // UART
     ,input           uart_txd_i
     ,output          uart_rxd_o
@@ -41,7 +44,6 @@ module top
      ,output wire        SCL
      ,output wire        SDA
      ,output wire        V1_RESET_N
-
 );
 
 // Generate 100 Mhz and 25 Mhz clocks from 125 Mhz input clock
@@ -186,7 +188,10 @@ assign spi_so_w    = flash_so_i;
 // 4: In/out - blue LED
 // 5: Wolfson codec SDA
 // 6: Wolfson codec SCL
-// 9...31: Not implmented
+// 7: DVI SDA
+// 8: DVI SCL
+// 9...15: Not implmented
+// 16..31: Joystick data
 //-----------------------------------------------------------------
 
 assign gpio_in_w[0]  = gpio_out_w[0];
@@ -206,14 +211,19 @@ assign gpio_in_w[4]  = led_blue;
 assign codec_sda = gpio_out_en_w[5]  ? gpio_out_w[5]  : 1'bz;
 assign gpio_in_w[5]  = codec_sda;
 
-
 assign codec_scl = gpio_out_en_w[6]  ? gpio_out_w[6]  : 1'bz;
 assign gpio_in_w[6]  = codec_scl;
+
+assign dvi0_sda = gpio_out_en_w[7]  ? gpio_out_w[7]  : 1'bz;
+assign gpio_in_w[7]  = dvi0_sda;
+
+assign dvi0_scl = gpio_out_en_w[8]  ? gpio_out_w[8]  : 1'bz;
+assign gpio_in_w[8]  = dvi0_scl;
 
 
 genvar i;
 generate
-for (i=7; i < 32; i=i+1)
+for (i=9; i < 32; i=i+1)
 begin
     assign gpio_in_w[i]  = 1'b0;
 end
@@ -279,6 +289,12 @@ ODDR2 bclk_buf (
 );
 
 // NES
+wire NES_JOYPAD_DATA1;
+wire NES_JOYPAD_CLK;
+wire NES_JOYPAD_LATCH;
+reg LastNesClock;
+reg [7:0] Joy1Data;
+reg [7:0] Joy2Data;
 
 nes_top nes_top_u (
     .CLK_25MHZ(clk25)         // 25MHz system clock signal
@@ -302,7 +318,34 @@ nes_top nes_top_u (
     ,.SDA(SDA)
     ,.V1_RESET_N(V1_RESET_N)
     ,.audio_out(audio_o)
+    ,.jp_data1_in(Joy1Data[0])
+    ,.jp_data2_in(Joy2Data[0])
+    ,.jp_clk(NES_JOYPAD_CLK)
+    ,.jp_latch(NES_JOYPAD_LATCH)
+
 );
+
+
+always @ (posedge clk100 or posedge rst)
+if (rst) begin
+    Joy1Data <= 8'b0;
+    Joy2Data <= 8'b0;
+    LastNesClock <= 1'b0;
+end
+else begin
+    if(NES_JOYPAD_LATCH) begin
+        Joy1Data <= gpio_out_w[23:16];
+        Joy2Data <= gpio_out_w[31:24];
+    end
+    else if(LastNesClock != NES_JOYPAD_CLK) begin
+        if(NES_JOYPAD_CLK) begin
+            Joy1Data <= {1'b1, Joy1Data[7:1]};
+            Joy2Data <= {1'b1, Joy2Data[7:1]};
+        end
+    end
+    LastNesClock <= NES_JOYPAD_CLK;
+end
+
 
 //-----------------------------------------------------------------
 // Tie-offs

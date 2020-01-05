@@ -3,7 +3,6 @@
 *.vcd
 *.a
 *_bd.bmm
-.platform
 build/
 lib/
 obj/
