@@ -66,10 +66,10 @@ communicated with the Pano using the DDC I2C lines on the VGA connector.
 The second generation Pano replaced the VGA port with an DVI port, but the DVI 
 port still includes the DDC interface. 
 
-My Pano came with a passive DVI to VGA adapter allows me to use my VGA cabling 
-from my Pano Man project without modifications.  All that was necessary was 
-write some firmware for the RISC-V to poll the controllers and wire the 
-controllers to a DB9 connector to replace the Atari 2600 joystick I use for 
+My Pano came with a passive DVI to VGA adapter which allows me to use the VGA 
+cabling from my Pano Man project without modifications.  All that was necessary 
+was to write some firmware for the RISC-V to poll the controllers and to wire 
+the controllers to a DB9 connector to replace the Atari 2600 joystick I use for 
 Pacman.
 
 Alhought one poll of the controllers requires 50 "bit banged" I2C operations the 
@@ -105,10 +105,10 @@ breadboard friendly DIP package if that's your thing.
 
 #### Game controller cabling
 
-While it's certainly possible to use a modify a DVI cable to breakout the DDC
-lines it's MUCH simpler with a VGA interface since there are a LOT less wires 
-to deal with.  If you really want or need to use the DVI interface I'd 
-suggest tacking wires onto the DVI connector rather than modifying a DVI cable.
+While it's certainly possible to a modify a DVI cable to breakout the DDC lines 
+it's MUCH simpler with a VGA interface since there are a LOT less wires to deal 
+with.  If you really want or need to use the DVI interface I'd suggest 
+tacking wires onto the DVI connector rather than modifying a DVI cable.
 
 **NB:** The following chart shows the colors of the wires for MY controller,
 they do NOT match the orignal NES controller.  You will need to buzz out the 
@@ -129,8 +129,8 @@ controller.
 Long, long after the original NES controller was introduced Nintendo released a 
 "NES Classic Edition" for retrogaming enthusiast.  This console used I2C for
 controller communications.  This seems like a natural for the Pano, but 
-unfortunately the new controllers use 3.3V power and signal levels.  While
-the Pano uses 5V levels per the DDC standard.
+unfortunately the new controllers use 3.3V power and signal levels while the 
+Pano uses 5V levels per the DDC standard.
 
 Additionally documentation on these controllers is scarce and it's unclear to 
 me if there are two separate I2C buses for two controllers or if the two 
@@ -245,7 +245,7 @@ skip@dell-790:~/pano/working/panog2_nes$
 
 ## Usage
 
-Once the flash has been update simply power cycle the Pano.  The Donkey Kong
+Once the flash has been update, simply power cycle the Pano.  The Donkey Kong
 JR Math game should start and "music" should start playing from the built in 
 speaker.  Headphones or an amplified speaker can be connected to the headphone 
 jack for better sound.
@@ -253,14 +253,14 @@ jack for better sound.
 The embedded file system contains 48 NES games from the orignal project that
 are supported.
 
-To say the least some of the games become annoying rather rapidly, but you can 
+To say the least, some of the games become annoying rather rapidly but you can 
 skip to the next game by pressing the Pano button.
 
 Game information is sent to the serial port when the games are loaded.  Most
 games display video almost immediately after load, but a few require a gamepad
 button to be pressed.
 
-Clearly game controllers are necessary to actually play the games, but the 
+Clearly game controllers are necessary to actually play the games but the 
 opening screens can be previewed without controllers.
 
 ## Serial port (Optional)
