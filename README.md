@@ -302,7 +302,7 @@ This project uses code from several other projects including:
 
 ## Pano Links
 
-Links to other Panologic information can be found [here](https://github.com/skiphansen/pano_blocks#pano-links)
+Links to other Panologic information can be found [here](https://github.com/tomverbeure/panologic-g2/wiki)
 
 ## LEGAL 
 
