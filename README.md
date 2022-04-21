@@ -5,13 +5,13 @@
 If you don't know what a Panologic thin client is please see [here](https://hackaday.com/2013/01/11/ask-hackaday-we-might-have-some-fpgas-to-hack/) 
 and [here](https://github.com/skiphansen/pano_hello_g1) for background.
 
-Magnus of Saanlima Electronics did the [orignal port](https://github.com/Saanlima/Pano_G2C) to the pano,
+Magnus of Saanlima Electronics did the [original port](https://github.com/Saanlima/Pano_G2C) to the pano,
 this project adds the following:
 
 * An RISC-V coprocessor based on Ultraembedded's [fpga_test_soc](https://github.com/ultraembedded/fpga_test_soc)
 * Hardware and software interfaces to the Panologic's sound system
 * A new APU mixer based on MiSter [project's](https://github.com/MiSTer-devel/NES_MiSTer) mixer
-* A spiffs filesystem containing game ROMs from Brian Bennet's original project.
+* A spiffs filesystem containing all 48 games from Brian Bennet's original project.
 * Firmware to load ROMs from the spiffs filesystem eliminating the need for a PC
 * Firmware to interface to original NES controllers connected to the Pano via an I2C port expander.
 
